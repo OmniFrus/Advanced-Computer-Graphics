@@ -13,5 +13,6 @@
     <qresource prefix="/models">
         <file alias="CreaseCube.obj">models/CreaseCube.obj</file>
         <file alias="CreaseSquare.obj">models/CreaseSquare.obj</file>
+        <file>CreaseOctahedron.obj</file>
     </qresource>
 </RCC>

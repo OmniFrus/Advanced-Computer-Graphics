@@ -55,6 +55,8 @@ void MainWindow::importOBJ(const QString& fileName) {
       setupCreaseCube(meshes[0]);
     } else if (fileName.contains("CreaseSquare", Qt::CaseInsensitive)) {
       setupCreaseSquare(meshes[0]);
+    } else if (fileName.contains("CreaseOctahedron", Qt::CaseInsensitive)) {
+      setupCreaseOctahedron(meshes[0]);
     }
     
     ui->MainDisplay->updateBuffers(meshes[0]);
@@ -186,20 +188,17 @@ void MainWindow::setupCreaseCube(Mesh &mesh) {
   // (top-left-back, top-left-front, top-right-front, top-right-back)
   
   // Top front edge (3-7): sharpness 2
-  mesh.setCreaseEdge(3, 7, 2);
-  
-  // Top back edge (2-6): sharpness 2
-  mesh.setCreaseEdge(2, 6, 2);
-  
-  // Top left edge (2-3): sharpness 1
-  mesh.setCreaseEdge(2, 3, 1);
-  
-  // Top right edge (6-7): sharpness 3
-  mesh.setCreaseEdge(6, 7, 3);
-  
-  // Also set one vertical edge as a crease for more interesting effect
-  // Vertical edge from top-left-front to bottom-left-front (3-1): sharpness 2
-  mesh.setCreaseEdge(3, 1, 2);
+  int sharpness = 3;
+  mesh.setCreaseEdge(3, 2, sharpness);
+  mesh.setCreaseEdge(2, 6, sharpness);
+  mesh.setCreaseEdge(6, 7, sharpness);
+  mesh.setCreaseEdge(7, 3, sharpness);
+
+  mesh.setCreaseEdge(0, 1, sharpness);
+  mesh.setCreaseEdge(1, 5, sharpness);
+  mesh.setCreaseEdge(5, 4, sharpness);
+  mesh.setCreaseEdge(4, 0, sharpness);
+
 }
 
 /**
@@ -211,15 +210,28 @@ void MainWindow::setupCreaseCube(Mesh &mesh) {
 void MainWindow::setupCreaseSquare(Mesh &mesh) {
   // Set top edge (2-3) as crease with sharpness 2
   // This edge will use sharp rules for 2 subdivision steps, then become smooth
-  mesh.setCreaseEdge(2, 3, 3);
-  
-  // Set right edge (1-2) as crease with sharpness 2
-  // This edge will use sharp rules for 2 subdivision steps, then become smooth
-  mesh.setCreaseEdge(1, 2, 4);
-  
-  // Set bottom edge (0-1) as crease with sharpness 1
-  // This edge will use sharp rules for 1 subdivision step, then become smooth
-  mesh.setCreaseEdge(0, 1, 2);
-  
-  // Set left edge (3-0) as smooth (sharpness 0) - already default
+  mesh.setCreaseEdge(1, 2, -1);
+  mesh.setCreaseEdge(2, 3, -1);
+  mesh.setCreaseEdge(3, 0, -1);
+  mesh.setCreaseEdge(0, 1, -1);
+}
+
+
+/**
+ * @brief MainWindow::setupCreaseOctahedron Sets up crease edges on a 3D octahedron model
+ * for visualization of crossing crease rules.
+ * @param mesh The octahedron mesh to set crease edges on.
+ */
+void MainWindow::setupCreaseOctahedron(Mesh &mesh) {
+    // Set top edge (2-3) as crease with sharpness 2
+    // This edge will use sharp rules for 2 subdivision steps, then become smooth
+    mesh.setCreaseEdge(1, 2, 4);
+    mesh.setCreaseEdge(3, 0, 4);
+    mesh.setCreaseEdge(3, 1, 4);
+    mesh.setCreaseEdge(2, 0, 4);
+
+    mesh.setCreaseEdge(0, 4, 2);
+    mesh.setCreaseEdge(4, 1, 2);
+    mesh.setCreaseEdge(1, 5, 2);
+    mesh.setCreaseEdge(5, 0, 2);
 }

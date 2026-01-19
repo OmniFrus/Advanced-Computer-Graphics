@@ -41,7 +41,7 @@ class MainWindow : public QMainWindow {
   void importOBJ(const QString &fileName);
   void setupCreaseCube(Mesh &mesh);  // Sets up crease edges on a cube model
   void setupCreaseSquare(Mesh &mesh);  // Sets up crease edges on a 2D square model
-
+  void setupCreaseOctahedron(Mesh &mesh);
   Ui::MainWindow *ui;
   Subdivider *subdivider;
   QVector<Mesh> meshes;

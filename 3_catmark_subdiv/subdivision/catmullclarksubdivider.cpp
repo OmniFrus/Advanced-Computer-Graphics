@@ -89,12 +89,12 @@ void CatmullClarkSubdivider::geometryRefinement(Mesh &controlMesh,
       int valence;
       QVector3D coords;
       if (currentEdge.isBoundaryEdge()) {
-        coords = boundaryEdgePoint(currentEdge);
-        valence = 3;
+          coords = boundaryEdgePoint(currentEdge);
+          valence = 3;
       } else if (currentEdge.isSharpEdge()) {
-        // Use sharp edge rules (same as boundary) for creases
-        coords = sharpEdgePoint(currentEdge);
-        valence = 3;  // Sharp edges behave like boundary edges
+          // Use sharp edge rules (same as boundary) for creases
+          coords = sharpEdgePoint(currentEdge);
+          valence = 4;  // Sharp edges behave like boundary edges
       } else {
         coords = edgePoint(currentEdge);
         valence = 4;
@@ -115,11 +115,11 @@ void CatmullClarkSubdivider::geometryRefinement(Mesh &controlMesh,
         // Corner: position unchanged
         coords = vertices[v].coords;
       } else if (numCreaseEdges == 2) {
-        // Standard crease vertex: use crease vertex rules
+        //Standard crease vertex: use crease vertex rules
         coords = creaseVertexPoint(vertices[v]);
       } else {
         // Smooth vertex (0 or 1 crease edge): use smooth vertex rules
-      coords = vertexPoint(vertices[v]);
+        coords = vertexPoint(vertices[v]);
       }
     }
     newVertices[v] = Vertex(coords, nullptr, vertices[v].valence, v);
@@ -248,12 +248,11 @@ QVector3D CatmullClarkSubdivider::creaseVertexPoint(
   } while (h != vertex.out && h != nullptr && iterations < maxIterations);
   
   if (creaseEdge1 != nullptr && creaseEdge2 != nullptr) {
-    QVector3D result = vertex.coords * 6.0f;
-    result += sharpEdgePoint(*creaseEdge1);
-    result += sharpEdgePoint(*creaseEdge2);
-    return result / 8.0f;
+    QVector3D result = 0.5f*vertex.coords;
+    result += 0.25f*sharpEdgePoint(*creaseEdge1);
+    result += 0.25f*sharpEdgePoint(*creaseEdge2);
+    return result;
   }
-  
   // Fallback: should not happen, but return vertex position unchanged
   return vertex.coords;
 }

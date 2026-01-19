@@ -6,6 +6,7 @@
 #include <QOpenGLFunctions_4_1_Core>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
+#include <QQuaternion>
 
 #include "mesh/mesh.h"
 #include "renderers/meshrenderer.h"

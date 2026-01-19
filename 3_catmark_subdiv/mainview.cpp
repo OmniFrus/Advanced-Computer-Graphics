@@ -116,8 +116,8 @@ void MainView::updateBuffers(Mesh& mesh) {
 }
 
 void MainView::clearEdgeSelection() {
-  selectedEdgeSharpness = -1;
-  emit edgeSelected(-1);
+  selectedEdgeSharpness = -2;
+  emit edgeSelected(-2);
   update();
 }
 
