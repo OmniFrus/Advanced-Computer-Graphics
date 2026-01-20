@@ -26,6 +26,7 @@ class MainView : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core {
   void updateMatrices();
   void updateUniforms();
   void updateBuffers(Mesh& currentMesh);
+  void updateSharpness(int sharpness);
 
   // Edge selection
   void setCurrentMesh(Mesh* mesh) { currentMesh = mesh; }

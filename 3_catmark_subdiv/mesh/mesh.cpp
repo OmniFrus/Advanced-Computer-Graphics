@@ -253,13 +253,10 @@ void Mesh::extractEdgeData() {
       edgeCoords.append(vertices[v2].coords);
       
       // Determine color based on sharpness
-      // Red for sharp edges (sharpness > 0 or -1), Yellow for smooth (sharpness == 0)
       QVector3D color;
-      if (edge->isSharpEdge()) {
-        color = QVector3D(1.0f, 0.0f, 0.0f);  // Red for sharp/crease edges
-      } else {
-        color = QVector3D(1.0f, 1.0f, 0.0f);  // Yellow for smooth edges
-      }
+
+      float s = fmin(fmax((float)edge->sharpness, 0.0f), 5.0f) / 5.0f;
+      color = QVector3D(1.0f, (1-s), 0.0f);
       
       // Add color for both vertices of the edge
       edgeColors.append(color);

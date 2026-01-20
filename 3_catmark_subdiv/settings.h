@@ -3,6 +3,7 @@
 
 #include <QMatrix4x4>
 
+#include "mesh/halfedge.h"
 #include "shadertypes.h"
 
 /**
@@ -19,7 +20,7 @@ typedef struct Settings {
   bool showLimitPosition = false;
 
   // Show sharp edges with colors (red = sharp, yellow = smooth)
-  bool showSharpEdges = false;
+  bool showSharpEdges = true;
 
   // Show vertices with colors (different color for boundary vertices)
   bool showVertices = false;
@@ -30,6 +31,11 @@ typedef struct Settings {
   float FoV = 80;
   float dispRatio = 16.0f / 9.0f;
   float rotAngle = 0.0f;
+
+  int subdivisionLevel = 0;
+
+  Vertex* selectedVertex;
+  HalfEdge* selectedEdge;
 
   bool uniformUpdateRequired = true;
 

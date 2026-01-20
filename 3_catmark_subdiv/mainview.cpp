@@ -115,6 +115,12 @@ void MainView::updateBuffers(Mesh& mesh) {
   update();
 }
 
+void MainView::updateSharpness(int sharpness) {
+    settings.selectedEdge->sharpness = sharpness;
+    settings.selectedEdge->twin->sharpness = sharpness;
+    updateBuffers(*currentMesh);
+}
+
 void MainView::clearEdgeSelection() {
   selectedEdgeSharpness = -2;
   emit edgeSelected(-2);
@@ -249,6 +255,7 @@ void MainView::mousePressEvent(QMouseEvent* event) {
     Vertex* selectedVertex = pickVertexAtScreenPosition(x, y);
     if (selectedVertex != nullptr) {
       // Check if vertex is on boundary - use -2 as sentinel value for "boundary"
+      settings.selectedVertex = selectedVertex;
       if (selectedVertex->isBoundaryVertex()) {
         selectedVertexSharpEdgeCount = -2;  // -2 indicates boundary vertex
         emit vertexSelected(-999);
@@ -258,17 +265,19 @@ void MainView::mousePressEvent(QMouseEvent* event) {
         emit vertexSelected(sharpEdgeCount);
       }
       clearEdgeSelection();  // Clear edge selection when selecting vertex
-      update();
+      updateBuffers(*currentMesh);
     } else {
       clearVertexSelection();
     }
   } else if (isEdgeSelection) {
     HalfEdge* selectedEdge = pickEdgeAtScreenPosition(x, y);
+    settings.selectedEdge = selectedEdge;
     if (selectedEdge != nullptr) {
       selectedEdgeSharpness = selectedEdge->sharpness;
       emit edgeSelected(selectedEdgeSharpness);
       clearVertexSelection();  // Clear vertex selection when selecting edge
-      update();
+      //currentMesh->getEdgeColors()[0] = QVector3D(0.0f, 0.4f, 0.0f);
+      updateBuffers(*currentMesh);
     } else {
       clearEdgeSelection();
     }

@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget* parent)
 
   // Initialize tessellation patch type toggle based on UI defaults
   ui->MainDisplay->settings.useBezierPatch = ui->BezierRadio->isChecked();
+  ui->ShowSharpEdgesCheckBox->setChecked(ui->MainDisplay->settings.showSharpEdges);
   
   // Connect edge selection signal
   connect(ui->MainDisplay, &MainView::edgeSelected, this, &MainWindow::onEdgeSelected);
@@ -85,6 +86,7 @@ void MainWindow::on_MeshPresetComboBox_currentTextChanged(
 }
 
 void MainWindow::on_SubdivSteps_valueChanged(int value) {
+  ui->MainDisplay->settings.subdivisionLevel = value;
   Subdivider* subdivider = new CatmullClarkSubdivider();
   for (int k = meshes.size() - 1; k < value; k++) {
     meshes.append(subdivider->subdivide(meshes[k]));
@@ -130,12 +132,17 @@ void MainWindow::on_ShowVerticesCheckBox_toggled(bool checked) {
 void MainWindow::onEdgeSelected(int sharpness) {
   if (sharpness == -1) {
     // Infinite sharpness
-    ui->EdgeSharpnessLabel->setText("∞");
+    ui->EdgeSharpness->setValue(-1);
   } else if (sharpness >= 0) {
-    ui->EdgeSharpnessLabel->setText(QString::number(sharpness));
+    ui->EdgeSharpness->setValue(sharpness);
   } else {
-    ui->EdgeSharpnessLabel->setText("-");
+    ui->EdgeSharpness->setValue(0);
   }
+}
+
+void MainWindow::on_EdgeSharpness_valueChanged(int sharpness) {
+    ui->MainDisplay->updateSharpness(sharpness);
+    meshes.resize(ui->MainDisplay->settings.subdivisionLevel + 1);
 }
 
 void MainWindow::onVertexSelected(int sharpEdgeCount) {

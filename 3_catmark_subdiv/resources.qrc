@@ -13,6 +13,18 @@
     <qresource prefix="/models">
         <file alias="CreaseCube.obj">models/CreaseCube.obj</file>
         <file alias="CreaseSquare.obj">models/CreaseSquare.obj</file>
-        <file>CreaseOctahedron.obj</file>
+        <file alias="CreaseOctahedron.obj">models/CreaseOctahedron.obj</file>
+        <file alias="FancyCup.obj">models/FancyCup.obj</file>
+        <file alias="Fertility.obj">models/Fertility.obj</file>
+        <file alias="HollowTetra.obj">models/HollowTetra.obj</file>
+        <file alias="ItaPaperGeom.obj">models/ItaPaperGeom.obj</file>
+        <file alias="OpenCube.obj">models/OpenCube.obj</file>
+        <file alias="RockerArm.obj">models/RockerArm.obj</file>
+        <file alias="StackedCubesClosed.obj">models/StackedCubesClosed.obj</file>
+        <file alias="StackedCubesOpen.obj">models/StackedCubesOpen.obj</file>
+        <file alias="SuzanneQuad.obj">models/SuzanneQuad.obj</file>
+        <file alias="Brick.obj">models/Brick.obj</file>
+        <file alias="Fandisk.obj">models/Fandisk.obj</file>
+        <file alias="Spot.obj">models/Spot.obj</file>
     </qresource>
 </RCC>

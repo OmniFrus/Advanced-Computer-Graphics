@@ -157,14 +157,7 @@ QGroupBox::title {
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="EdgeSharpnessLabel">
-            <property name="toolTip">
-             <string>Right-click or Shift+Left-click on an edge to see its sharpness</string>
-            </property>
-            <property name="text">
-             <string>-</string>
-            </property>
-           </widget>
+           <widget class="QSpinBox" name="EdgeSharpness"/>
           </item>
          </layout>
         </item>
