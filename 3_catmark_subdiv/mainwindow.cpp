@@ -5,6 +5,7 @@
 #include "subdivision/catmullclarksubdivider.h"
 #include "subdivision/subdivider.h"
 #include "ui_mainwindow.h"
+#include <QSignalBlocker>
 
 /**
  * @brief MainWindow::MainWindow Creates a new Main Window UI.
@@ -85,16 +86,20 @@ void MainWindow::on_MeshPresetComboBox_currentTextChanged(
   importOBJ(":/models/" + meshName + ".obj");
 }
 
-void MainWindow::on_SubdivSteps_valueChanged(int value) {
-  ui->MainDisplay->settings.subdivisionLevel = value;
-  Subdivider* subdivider = new CatmullClarkSubdivider();
-  for (int k = meshes.size() - 1; k < value; k++) {
-    meshes.append(subdivider->subdivide(meshes[k]));
+  void MainWindow::on_SubdivSteps_valueChanged(int value) {
+    ui->MainDisplay->settings.subdivisionLevel = value;
+    // Clear edge and vertex selection when subdividing (selected edges/vertices may point to different mesh)
+    const QSignalBlocker edgeSharpnessBlocker(ui->EdgeSharpness);
+    ui->MainDisplay->clearEdgeSelection();
+    ui->MainDisplay->clearVertexSelection();
+    Subdivider* subdivider = new CatmullClarkSubdivider();
+    for (int k = meshes.size() - 1; k < value; k++) {
+      meshes.append(subdivider->subdivide(meshes[k]));
+    }
+    ui->MainDisplay->updateBuffers(meshes[value]);
+    ui->MainDisplay->setCurrentMesh(&meshes[value]);
+    delete subdivider;
   }
-  ui->MainDisplay->updateBuffers(meshes[value]);
-  ui->MainDisplay->setCurrentMesh(&meshes[value]);
-  delete subdivider;
-}
 
 void MainWindow::on_TessellationCheckBox_toggled(bool checked) {
   ui->MainDisplay->settings.tesselationMode = checked;
@@ -129,19 +134,19 @@ void MainWindow::on_ShowVerticesCheckBox_toggled(bool checked) {
     ui->MainDisplay->update();
 }
 
-void MainWindow::onEdgeSelected(int sharpness) {
-  if (sharpness == -1) {
+void MainWindow::onEdgeSelected(float sharpness) {
+  if (sharpness == -1.0f) {
     // Infinite sharpness
-    ui->EdgeSharpness->setValue(-1);
-  } else if (sharpness >= 0) {
+    ui->EdgeSharpness->setValue(-1.0);
+  } else if (sharpness >= 0.0f) {
     ui->EdgeSharpness->setValue(sharpness);
   } else {
-    ui->EdgeSharpness->setValue(0);
+    ui->EdgeSharpness->setValue(0.0);
   }
 }
 
-void MainWindow::on_EdgeSharpness_valueChanged(int sharpness) {
-    ui->MainDisplay->updateSharpness(sharpness);
+void MainWindow::on_EdgeSharpness_valueChanged(double sharpness) {
+    ui->MainDisplay->updateSharpness(static_cast<float>(sharpness));
     meshes.resize(ui->MainDisplay->settings.subdivisionLevel + 1);
 }
 
@@ -195,7 +200,7 @@ void MainWindow::setupCreaseCube(Mesh &mesh) {
   // (top-left-back, top-left-front, top-right-front, top-right-back)
   
   // Top front edge (3-7): sharpness 2
-  int sharpness = 3;
+  float sharpness = 3.0f;
   mesh.setCreaseEdge(3, 2, sharpness);
   mesh.setCreaseEdge(2, 6, sharpness);
   mesh.setCreaseEdge(6, 7, sharpness);

@@ -25,7 +25,7 @@ class HalfEdge {
   int edgeIdx() const;
 
   bool isBoundaryEdge() const;
-  bool isSharpEdge() const;  // Returns true if sharpness > 0 or == -1 (infinite)
+  bool isSharpEdge() const;  // Returns true if sharpness > 0.0 or == -1 (infinite)
 
   Vertex* origin;
   HalfEdge* next;
@@ -35,7 +35,7 @@ class HalfEdge {
   int index;
 
   int edgeIndex;
-  int sharpness;  // Integer sharpness value: 0 = smooth, >0 = crease, -1 = infinite sharpness
+  float sharpness;  // Sharpness value: 0 = smooth, >0 = crease (can be non-integer), -1 = infinite sharpness
 };
 
 #endif  // HALFEDGE

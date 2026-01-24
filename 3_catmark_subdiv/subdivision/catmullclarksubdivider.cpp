@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QSet>
+#include <cmath>
 
 /**
  * @brief CatmullClarkSubdivider::CatmullClarkSubdivider Creates a new empty
@@ -92,8 +93,20 @@ void CatmullClarkSubdivider::geometryRefinement(Mesh &controlMesh,
           coords = boundaryEdgePoint(currentEdge);
           valence = 3;
       } else if (currentEdge.isSharpEdge()) {
-          // Use sharp edge rules (same as boundary) for creases
-          coords = sharpEdgePoint(currentEdge);
+          // For non-integer sharpness, blend between sharp and smooth edge rules
+          float s = currentEdge.sharpness;
+          if (s == -1.0f) {
+            // Infinite sharpness: use sharp rules
+            coords = sharpEdgePoint(currentEdge);
+          } else {
+            // Non-integer sharpness: blend between sharp and smooth
+            float fractionalPart = s - floorf(s);
+            QVector3D sharpCoords = sharpEdgePoint(currentEdge);
+            QVector3D smoothCoords = edgePoint(currentEdge);
+            // Blend: when fractional part is 0, use sharp; when 1, use smooth
+            // So we use (1 - fractionalPart) * sharp + fractionalPart * smooth
+            coords = (1.0f - fractionalPart) * sharpCoords + fractionalPart * smoothCoords;
+          }
           valence = 4;  // Sharp edges behave like boundary edges
       } else {
         coords = edgePoint(currentEdge);
@@ -115,8 +128,51 @@ void CatmullClarkSubdivider::geometryRefinement(Mesh &controlMesh,
         // Corner: position unchanged
         coords = vertices[v].coords;
       } else if (numCreaseEdges == 2) {
-        //Standard crease vertex: use crease vertex rules
-        coords = creaseVertexPoint(vertices[v]);
+        // Crease vertex: blend between crease and smooth rules based on sharpness
+        QVector3D creaseCoords = creaseVertexPoint(vertices[v]);
+        QVector3D smoothCoords = vertexPoint(vertices[v]);
+        
+        // Find the two crease edges and get their sharpness values
+        HalfEdge* creaseEdge1 = nullptr;
+        HalfEdge* creaseEdge2 = nullptr;
+        QSet<int> foundEdgeIndices;
+        HalfEdge* h = vertices[v].out;
+        int maxIterations = vertices[v].valence * 2;
+        int iterations = 0;
+        
+        do {
+          if (h->isSharpEdge() && !foundEdgeIndices.contains(h->edgeIndex)) {
+            if (creaseEdge1 == nullptr) {
+              creaseEdge1 = h;
+              foundEdgeIndices.insert(h->edgeIndex);
+            } else if (creaseEdge2 == nullptr) {
+              creaseEdge2 = h;
+              foundEdgeIndices.insert(h->edgeIndex);
+              break;
+            }
+          }
+          h = h->prev->twin;
+          if (h == nullptr) break;
+          iterations++;
+        } while (h != vertices[v].out && h != nullptr && iterations < maxIterations);
+        
+        // Calculate blending factor based on fractional parts of sharpness
+        float blendFactor = 0.0f;
+        if (creaseEdge1 != nullptr && creaseEdge2 != nullptr) {
+          float s1 = creaseEdge1->sharpness;
+          float s2 = creaseEdge2->sharpness;
+          if (s1 == -1.0f || s2 == -1.0f) {
+            // Infinite sharpness: use crease rules
+            blendFactor = 0.0f;
+          } else {
+            // Use average of fractional parts for blending
+            float f1 = s1 - floorf(s1);
+            float f2 = s2 - floorf(s2);
+            blendFactor = (f1 + f2) / 2.0f;
+          }
+        }
+        // Blend: when blendFactor is 0, use crease; when 1, use smooth
+        coords = (1.0f - blendFactor) * creaseCoords + blendFactor * smoothCoords;
       } else {
         // Smooth vertex (0 or 1 crease edge): use smooth vertex rules
         coords = vertexPoint(vertices[v]);
@@ -366,15 +422,15 @@ void CatmullClarkSubdivider::topologyRefinement(Mesh &controlMesh,
     
     // Propagate sharpness according to hybrid subdivision rules
     // When an edge with sharpness s > 0 is subdivided:
-    // - The two child edges along the original edge get sharpness s-1
+    // - The two child edges along the original edge get sharpness s-1.0
     // - New edges connecting to face points are smooth (sharpness 0)
     
-    // Calculate new sharpness for the original edge (decrement by 1)
-    int newSharpness = 0;
-    if (edge->sharpness > 0) {
-      newSharpness = edge->sharpness - 1;
-    } else if (edge->sharpness == -1) {
-      newSharpness = -1;  // Infinite sharpness stays infinite
+    // Calculate new sharpness for the original edge (decrement by 1.0)
+    float newSharpness = 0.0f;
+    if (edge->sharpness > 0.0f) {
+      newSharpness = edge->sharpness - 1.0f;
+    } else if (edge->sharpness == -1.0f) {
+      newSharpness = -1.0f;  // Infinite sharpness stays infinite
     }
     
     // h1 is part of the original edge (from vertex to edge point)
@@ -386,11 +442,11 @@ void CatmullClarkSubdivider::topologyRefinement(Mesh &controlMesh,
     }
     
     // h4 is part of the previous edge (from previous edge point to vertex)
-    int prevEdgeSharpness = 0;
-    if (edge->prev->sharpness > 0) {
-      prevEdgeSharpness = edge->prev->sharpness - 1;
-    } else if (edge->prev->sharpness == -1) {
-      prevEdgeSharpness = -1;  // Infinite sharpness stays infinite
+    float prevEdgeSharpness = 0.0f;
+    if (edge->prev->sharpness > 0.0f) {
+      prevEdgeSharpness = edge->prev->sharpness - 1.0f;
+    } else if (edge->prev->sharpness == -1.0f) {
+      prevEdgeSharpness = -1.0f;  // Infinite sharpness stays infinite
     }
     newMesh.halfEdges[h4].sharpness = prevEdgeSharpness;
     if (twinIdx4 >= 0) {
@@ -398,14 +454,14 @@ void CatmullClarkSubdivider::topologyRefinement(Mesh &controlMesh,
     }
     
     // h2 and h3 are new edges connecting to face points - they are always smooth
-    newMesh.halfEdges[h2].sharpness = 0;
-    newMesh.halfEdges[h3].sharpness = 0;
+    newMesh.halfEdges[h2].sharpness = 0.0f;
+    newMesh.halfEdges[h3].sharpness = 0.0f;
     // Set twins if they exist (new edges should also be smooth)
     if (newMesh.halfEdges[h2].twin) {
-      newMesh.halfEdges[h2].twin->sharpness = 0;
+      newMesh.halfEdges[h2].twin->sharpness = 0.0f;
     }
     if (newMesh.halfEdges[h3].twin) {
-      newMesh.halfEdges[h3].twin->sharpness = 0;
+      newMesh.halfEdges[h3].twin->sharpness = 0.0f;
     }
   }
 }

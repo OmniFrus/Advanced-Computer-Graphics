@@ -1,5 +1,8 @@
 #include "meshrenderer.h"
 
+#include <cmath>
+#include <algorithm>
+
 /**
  * @brief MeshRenderer::MeshRenderer Creates a new mesh renderer.
  */
@@ -240,7 +243,18 @@ void MeshRenderer::draw() {
     }
     
     gl->glBindVertexArray(edgeVAO);
-    gl->glLineWidth(2.5f);  // Make edges slightly thicker for visibility
+    // Query supported line width range and clamp to valid range
+    // Many systems only support line width 1.0, so we check the range first
+    float lineWidthRange[2];
+    gl->glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, lineWidthRange);
+    float desiredWidth = 2.0f;  // Desired line width
+    float clampedWidth = std::max(lineWidthRange[0], std::min(desiredWidth, lineWidthRange[1]));
+    // Only set if it's different from 1.0 and within range
+    if (clampedWidth > 1.0f && clampedWidth >= lineWidthRange[0] && clampedWidth <= lineWidthRange[1]) {
+      gl->glLineWidth(clampedWidth);
+    } else {
+      gl->glLineWidth(1.0f);  // Use 1.0 which is always supported
+    }
     gl->glDrawArrays(GL_LINES, 0, edgeVertexCount);
     gl->glLineWidth(1.0f);  // Reset line width
     gl->glBindVertexArray(0);

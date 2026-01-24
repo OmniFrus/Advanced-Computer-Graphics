@@ -108,29 +108,45 @@ void MainView::updateMatrices() {
  */
 void MainView::updateBuffers(Mesh& mesh) {
   g_showLimitPosition = settings.showLimitPosition;
-  mesh.extractAttributes();
+  mesh.extractAttributes(settings.selectedEdge, settings.selectedVertex);
   meshRenderer.updateBuffers(mesh);
   tessellationRenderer.updateBuffers(mesh);
   currentMesh = &mesh;  // Store reference for edge picking
   update();
 }
 
-void MainView::updateSharpness(int sharpness) {
-    settings.selectedEdge->sharpness = sharpness;
-    settings.selectedEdge->twin->sharpness = sharpness;
-    updateBuffers(*currentMesh);
+void MainView::updateSharpness(float sharpness) {
+    if (settings.selectedEdge != nullptr) {
+      settings.selectedEdge->sharpness = sharpness;
+      if (settings.selectedEdge->twin != nullptr) {
+        settings.selectedEdge->twin->sharpness = sharpness;
+      }
+      if (currentMesh != nullptr) {
+        updateBuffers(*currentMesh);
+      }
+    }
 }
 
 void MainView::clearEdgeSelection() {
-  selectedEdgeSharpness = -2;
-  emit edgeSelected(-2);
-  update();
+  settings.selectedEdge = nullptr;  // Clear the selected edge reference
+  selectedEdgeSharpness = -2.0f;
+  emit edgeSelected(-2.0f);
+  if (currentMesh != nullptr) {
+    updateBuffers(*currentMesh);  // Update buffers to remove highlighting
+  } else {
+    update();
+  }
 }
 
 void MainView::clearVertexSelection() {
+  settings.selectedVertex = nullptr;  // Clear the selected vertex reference
   selectedVertexSharpEdgeCount = -1;
   emit vertexSelected(-1);
-  update();
+  if (currentMesh != nullptr) {
+    updateBuffers(*currentMesh);  // Update buffers to remove highlighting
+  } else {
+    update();
+  }
 }
 
 /**

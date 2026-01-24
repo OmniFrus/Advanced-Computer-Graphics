@@ -65,8 +65,10 @@ bool g_prevShowLimitPosition = false;
 /**
  * @brief Mesh::extractAttributes Extracts the normals, vertex coordinates and
  * indices into easy-to-access buffers.
+ * @param selectedEdge Optional pointer to the currently selected edge for highlighting
+ * @param selectedVertex Optional pointer to the currently selected vertex for highlighting
  */
-void Mesh::extractAttributes() {
+void Mesh::extractAttributes(HalfEdge* selectedEdge, Vertex* selectedVertex) {
     if (g_showLimitPosition && !g_prevShowLimitPosition) {
         backupOriginalCoordsIfNeeded();
         projectVerticesToCatmullClarkLimit();
@@ -111,10 +113,10 @@ void Mesh::extractAttributes() {
   quadIndices.squeeze();
   
   // Extract edge data for visualization
-  extractEdgeData();
+  extractEdgeData(selectedEdge);
   
   // Extract vertex data for visualization
-  extractVertexData();
+  extractVertexData(selectedVertex);
 }
 
 /**
@@ -199,9 +201,9 @@ void Mesh::projectVerticesToCatmullClarkLimit() {
  * two vertices. This is a utility function for testing semi-sharp creases.
  * @param vertexIdx1 Index of the first vertex.
  * @param vertexIdx2 Index of the second vertex.
- * @param sharpness The sharpness value (0 = smooth, >0 = crease, -1 = infinite).
+ * @param sharpness The sharpness value (0 = smooth, >0 = crease, can be non-integer, -1 = infinite).
  */
-void Mesh::setCreaseEdge(int vertexIdx1, int vertexIdx2, int sharpness) {
+void Mesh::setCreaseEdge(int vertexIdx1, int vertexIdx2, float sharpness) {
   // Find all half-edges connecting these two vertices
   for (int h = 0; h < halfEdges.size(); ++h) {
     HalfEdge* edge = &halfEdges[h];
@@ -228,8 +230,9 @@ void Mesh::setCreaseEdge(int vertexIdx1, int vertexIdx2, int sharpness) {
 /**
  * @brief Mesh::extractEdgeData Extracts edge coordinates and colors based on
  * sharpness for visualization. Red = sharp edge, Yellow = smooth edge.
+ * @param selectedEdge Optional pointer to the currently selected edge for highlighting
  */
-void Mesh::extractEdgeData() {
+void Mesh::extractEdgeData(HalfEdge* selectedEdge) {
   edgeCoords.clear();
   edgeColors.clear();
   
@@ -252,11 +255,29 @@ void Mesh::extractEdgeData() {
       edgeCoords.append(vertices[v1].coords);
       edgeCoords.append(vertices[v2].coords);
       
-      // Determine color based on sharpness
+      // Check if this is the selected edge (check both half-edges)
+      bool isSelected = (selectedEdge != nullptr && 
+                         (edge == selectedEdge || edge->twin == selectedEdge));
+      
       QVector3D color;
-
-      float s = fmin(fmax((float)edge->sharpness, 0.0f), 5.0f) / 5.0f;
-      color = QVector3D(1.0f, (1-s), 0.0f);
+      if (isSelected) {
+        // Highlight selected edge with bright cyan
+        color = QVector3D(0.0f, 1.0f, 1.0f);  // Cyan for selected edge
+      } else {
+        // Determine color based on sharpness
+        float s = edge->sharpness;
+        if (s == -1.0f) {
+          // Infinite sharpness: bright red
+          color = QVector3D(1.0f, 0.0f, 0.0f);
+        } else if (s > 0.0f) {
+          // Semi-sharp or sharp: interpolate from red to yellow based on sharpness
+          float normalized = fmin(fmax(s, 0.0f), 5.0f) / 5.0f;
+          color = QVector3D(1.0f, (1.0f - normalized), 0.0f);
+        } else {
+          // Smooth edge: yellow
+          color = QVector3D(1.0f, 1.0f, 0.0f);
+        }
+      }
       
       // Add color for both vertices of the edge
       edgeColors.append(color);
@@ -271,8 +292,9 @@ void Mesh::extractEdgeData() {
 /**
  * @brief Mesh::extractVertexData Extracts vertex coordinates and colors based on
  * whether they are boundary vertices. Blue = boundary vertex, Green = normal vertex.
+ * @param selectedVertex Optional pointer to the currently selected vertex for highlighting
  */
-void Mesh::extractVertexData() {
+void Mesh::extractVertexData(Vertex* selectedVertex) {
   vertexDisplayCoords.clear();
   vertexDisplayColors.clear();
   
@@ -282,10 +304,14 @@ void Mesh::extractVertexData() {
     // Add vertex coordinates
     vertexDisplayCoords.append(vertex->coords);
     
-    // Determine color based on whether vertex is on boundary
-    // Blue for boundary vertices, Green for normal vertices
+    // Check if this is the selected vertex
+    bool isSelected = (selectedVertex != nullptr && vertex == selectedVertex);
+    
     QVector3D color;
-    if (vertex->isBoundaryVertex()) {
+    if (isSelected) {
+      // Highlight selected vertex with bright magenta
+      color = QVector3D(1.0f, 0.0f, 1.0f);  // Magenta for selected vertex
+    } else if (vertex->isBoundaryVertex()) {
       color = QVector3D(0.0f, 0.0f, 1.0f);  // Blue for boundary vertices
     } else {
       color = QVector3D(0.0f, 1.0f, 0.0f);  // Green for normal vertices

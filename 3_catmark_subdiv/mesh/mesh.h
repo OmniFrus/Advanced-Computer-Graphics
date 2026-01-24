@@ -29,7 +29,7 @@ class Mesh {
   inline QVector<QVector3D>& getVertexDisplayCoords() { return vertexDisplayCoords; }
   inline QVector<QVector3D>& getVertexDisplayColors() { return vertexDisplayColors; }
 
-  void extractAttributes();
+  void extractAttributes(HalfEdge* selectedEdge = nullptr, Vertex* selectedVertex = nullptr);
   void recalculateNormals();
   void projectVerticesToCatmullClarkLimit();
 
@@ -43,11 +43,11 @@ class Mesh {
 
   // Utility function to set crease edges (for testing semi-sharp creases)
   // Sets sharpness for all half-edges of edges connecting the specified vertices
-  void setCreaseEdge(int vertexIdx1, int vertexIdx2, int sharpness);
+  void setCreaseEdge(int vertexIdx1, int vertexIdx2, float sharpness);
 
  private:
-  void extractEdgeData();  // Extracts edge coordinates and colors for visualization
-  void extractVertexData();  // Extracts vertex coordinates and colors for visualization
+  void extractEdgeData(HalfEdge* selectedEdge = nullptr);  // Extracts edge coordinates and colors for visualization
+  void extractVertexData(Vertex* selectedVertex = nullptr);  // Extracts vertex coordinates and colors for visualization
   QVector<QVector3D> vertexCoords;
   QVector<QVector3D> vertexNormals;
   QVector<unsigned int> polyIndices;

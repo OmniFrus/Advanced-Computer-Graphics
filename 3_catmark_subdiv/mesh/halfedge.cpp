@@ -133,5 +133,5 @@ int HalfEdge::edgeIdx() const { return edgeIndex; }
 bool HalfEdge::isBoundaryEdge() const { return twin == nullptr; }
 
 bool HalfEdge::isSharpEdge() const {
-  return sharpness > 0 || sharpness == -1;  // -1 represents infinite sharpness
+  return sharpness > 0.0f || sharpness == -1.0f;  // -1 represents infinite sharpness
 }

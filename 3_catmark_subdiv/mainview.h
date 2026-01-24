@@ -26,11 +26,11 @@ class MainView : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core {
   void updateMatrices();
   void updateUniforms();
   void updateBuffers(Mesh& currentMesh);
-  void updateSharpness(int sharpness);
+  void updateSharpness(float sharpness);
 
   // Edge selection
   void setCurrentMesh(Mesh* mesh) { currentMesh = mesh; }
-  int getSelectedEdgeSharpness() const { return selectedEdgeSharpness; }
+  float getSelectedEdgeSharpness() const { return selectedEdgeSharpness; }
   void clearEdgeSelection();
   
   // Vertex selection
@@ -38,7 +38,7 @@ class MainView : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core {
   void clearVertexSelection();
 
  signals:
-  void edgeSelected(int sharpness);  // Signal emitted when an edge is selected
+  void edgeSelected(float sharpness);  // Signal emitted when an edge is selected
   void vertexSelected(int sharpEdgeCount);  // Signal emitted when a vertex is selected
 
  protected:
@@ -60,7 +60,7 @@ class MainView : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core {
   QOpenGLDebugLogger debugLogger;
   
   Mesh* currentMesh = nullptr;  // Reference to current mesh for edge/vertex picking
-  int selectedEdgeSharpness = -1;  // -1 means no selection
+  float selectedEdgeSharpness = -1.0f;  // -1 means no selection
   int selectedVertexSharpEdgeCount = -1;  // -1 means no selection
 
   // for mouse interactions:
