@@ -65,7 +65,6 @@ void MainView::initializeGL() {
 
   // initialize renderers here with the current context
   meshRenderer.init(functions, &settings);
-  tessellationRenderer.init(functions, &settings);
   updateMatrices();
 }
 
@@ -110,7 +109,6 @@ void MainView::updateBuffers(Mesh& mesh) {
   g_showLimitPosition = settings.showLimitPosition;
   mesh.extractAttributes(settings.selectedEdge, settings.selectedVertex);
   meshRenderer.updateBuffers(mesh);
-  tessellationRenderer.updateBuffers(mesh);
   currentMesh = &mesh;  // Store reference for edge picking
   update();
 }
@@ -165,9 +163,6 @@ void MainView::paintGL() {
   if (settings.modelLoaded) {
     if (settings.showCpuMesh) {
       meshRenderer.draw();
-    }
-    if (settings.tesselationMode) {
-      tessellationRenderer.draw();
     }
 
     if (settings.uniformUpdateRequired) {
@@ -246,8 +241,7 @@ void MainView::mouseMoveEvent(QMouseEvent* event) {
 
 /**
  * @brief MainView::mousePressEvent Handles presses by the mouse.
- * Right-click or Shift+Left-click selects edges to show their sharpness.
- * Ctrl+Left-click selects vertices to show their sharp edge count.
+ * Right-click selects edges to show their sharpness and ctrl+right-click selects vertices to show their sharp edge count.
  * @param event Mouse event.
  */
 void MainView::mousePressEvent(QMouseEvent* event) {
@@ -259,13 +253,11 @@ void MainView::mousePressEvent(QMouseEvent* event) {
   float y = event->position().y();
   
   // Ctrl+Left-click for vertex selection
-  bool isVertexSelection = (event->button() == Qt::LeftButton && 
+  bool isVertexSelection = (event->button() == Qt::RightButton &&
                            event->modifiers() & Qt::ControlModifier);
   
   // Right-click or Shift+Left-click for edge selection
-  bool isEdgeSelection = (event->button() == Qt::RightButton) ||
-                          (event->button() == Qt::LeftButton && 
-                           event->modifiers() & Qt::ShiftModifier);
+  bool isEdgeSelection = (event->button() == Qt::RightButton);
   
   if (isVertexSelection) {
     Vertex* selectedVertex = pickVertexAtScreenPosition(x, y);

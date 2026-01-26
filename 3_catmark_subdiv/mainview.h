@@ -70,7 +70,6 @@ class MainView : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core {
   bool dragging;
 
   MeshRenderer meshRenderer;
-  TessellationRenderer tessellationRenderer;
 
   Settings settings;
 

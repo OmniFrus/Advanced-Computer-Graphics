@@ -303,6 +303,9 @@ QVector3D CatmullClarkSubdivider::creaseVertexPoint(
     iterations++;
   } while (h != vertex.out && h != nullptr && iterations < maxIterations);
   
+  // Actually does not follow the stencil from the paper, but seems to work
+  // as opposed to the original paper's stencil. Can't explain why, I just
+  // tried other stencils and now it seems to be fine.
   if (creaseEdge1 != nullptr && creaseEdge2 != nullptr) {
     QVector3D result = 0.5f*vertex.coords;
     result += 0.25f*sharpEdgePoint(*creaseEdge1);
@@ -430,7 +433,7 @@ void CatmullClarkSubdivider::topologyRefinement(Mesh &controlMesh,
     if (edge->sharpness > 0.0f) {
       newSharpness = edge->sharpness - 1.0f;
     } else if (edge->sharpness == -1.0f) {
-      newSharpness = -1.0f;  // Infinite sharpness stays infinite
+      newSharpness = -1.0f;  // Infinite sharpness edges stay infinite
     }
     
     // h1 is part of the original edge (from vertex to edge point)
@@ -446,17 +449,17 @@ void CatmullClarkSubdivider::topologyRefinement(Mesh &controlMesh,
     if (edge->prev->sharpness > 0.0f) {
       prevEdgeSharpness = edge->prev->sharpness - 1.0f;
     } else if (edge->prev->sharpness == -1.0f) {
-      prevEdgeSharpness = -1.0f;  // Infinite sharpness stays infinite
+      prevEdgeSharpness = -1.0f;  // infinite sharpness edges stay infinite
     }
     newMesh.halfEdges[h4].sharpness = prevEdgeSharpness;
     if (twinIdx4 >= 0) {
       newMesh.halfEdges[twinIdx4].sharpness = prevEdgeSharpness;
     }
     
-    // h2 and h3 are new edges connecting to face points - they are always smooth
+    // h2 and h3 are new edges connecting to face points (should all be smooth)
     newMesh.halfEdges[h2].sharpness = 0.0f;
     newMesh.halfEdges[h3].sharpness = 0.0f;
-    // Set twins if they exist (new edges should also be smooth)
+    // Set twins if they exist
     if (newMesh.halfEdges[h2].twin) {
       newMesh.halfEdges[h2].twin->sharpness = 0.0f;
     }

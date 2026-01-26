@@ -15,12 +15,8 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
   ui->MeshGroupBox->setEnabled(ui->MainDisplay->settings.modelLoaded);
-  ui->tessSettingsGroupBox->setEnabled(
-      ui->MainDisplay->settings.tesselationMode);
-
-  // Initialize tessellation patch type toggle based on UI defaults
-  ui->MainDisplay->settings.useBezierPatch = ui->BezierRadio->isChecked();
   ui->ShowSharpEdgesCheckBox->setChecked(ui->MainDisplay->settings.showSharpEdges);
+  ui->EdgeSharpness->setDisabled(true);
   
   // Connect edge selection signal
   connect(ui->MainDisplay, &MainView::edgeSelected, this, &MainWindow::onEdgeSelected);
@@ -101,21 +97,6 @@ void MainWindow::on_MeshPresetComboBox_currentTextChanged(
     delete subdivider;
   }
 
-void MainWindow::on_TessellationCheckBox_toggled(bool checked) {
-  ui->MainDisplay->settings.tesselationMode = checked;
-  ui->tessSettingsGroupBox->setEnabled(checked);
-  ui->MainDisplay->settings.uniformUpdateRequired = true;
-  ui->MainDisplay->update();
-}
-
-void MainWindow::on_HideMeshCheckBox_toggled(bool checked) {
-  // Useful for clearly seeing only the patches rendered by the Tessellation
-  // shaders.
-  ui->MainDisplay->settings.showCpuMesh = !checked;
-  ui->MainDisplay->settings.uniformUpdateRequired = true;
-  ui->MainDisplay->update();
-}
-
 void MainWindow::on_LimitPositionCheckBox_toggled(bool checked) {
     ui->MainDisplay->settings.showLimitPosition = checked;
     ui->MainDisplay->updateBuffers(meshes[ui->SubdivSteps->value()]);
@@ -135,17 +116,31 @@ void MainWindow::on_ShowVerticesCheckBox_toggled(bool checked) {
 }
 
 void MainWindow::onEdgeSelected(float sharpness) {
-  if (sharpness == -1.0f) {
-    // Infinite sharpness
-    ui->EdgeSharpness->setValue(-1.0);
-  } else if (sharpness >= 0.0f) {
+  if (sharpness >= -1.0f) {
+    ui->EdgeSharpness->setDisabled(false);
     ui->EdgeSharpness->setValue(sharpness);
   } else {
     ui->EdgeSharpness->setValue(0.0);
+    ui->EdgeSharpness->setDisabled(true);
+
   }
 }
 
 void MainWindow::on_EdgeSharpness_valueChanged(double sharpness) {
+    // No edge selected or same edge selected
+    if (ui->MainDisplay->settings.selectedEdge && sharpness == ui->MainDisplay->settings.selectedEdge->sharpness) {
+        return;
+    }
+    // Clamp sharpness to positive or infinite
+    if (sharpness < 0) {
+        if (ui->MainDisplay->settings.selectedEdge->sharpness < 0) {
+            sharpness = 0;
+        } else {
+            sharpness = -1;
+        }
+        ui->EdgeSharpness->setValue(sharpness);
+    }
+    ui->EdgeSharpness->setValue(sharpness);
     ui->MainDisplay->updateSharpness(static_cast<float>(sharpness));
     meshes.resize(ui->MainDisplay->settings.subdivisionLevel + 1);
 }
@@ -159,22 +154,6 @@ void MainWindow::onVertexSelected(int sharpEdgeCount) {
     ui->VertexSharpEdgeCountLabel->setText("boundary");
   } else {
     ui->VertexSharpEdgeCountLabel->setText(QString::number(sharpEdgeCount));
-  }
-}
-
-void MainWindow::on_BezierRadio_toggled(bool checked) {
-  if (checked) {
-    ui->MainDisplay->settings.useBezierPatch = true;
-    ui->MainDisplay->settings.uniformUpdateRequired = true;
-    ui->MainDisplay->update();
-  }
-}
-
-void MainWindow::on_BSplineRadio_toggled(bool checked) {
-  if (checked) {
-    ui->MainDisplay->settings.useBezierPatch = false;
-    ui->MainDisplay->settings.uniformUpdateRequired = true;
-    ui->MainDisplay->update();
   }
 }
 
